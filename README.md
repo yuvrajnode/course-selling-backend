@@ -1,93 +1,89 @@
-# 🎓 Course Selling Backend API
+# Course Selling Backend
 
-A robust and scalable backend API for a course selling platform, built with **Node.js**, **Express**, and **MongoDB**. This project provides a complete set of features for both users and administrators, including secure authentication, course management, and purchase tracking.
+REST API for a course marketplace: admins publish courses, students sign up, browse, and buy them. Built with Node.js, Express 5, MongoDB and JWT, with separate auth for admins and users.
 
-## 🚀 Features
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white)
+![Express](https://img.shields.io/badge/Express_5-000000?style=flat-square&logo=express&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=flat-square&logo=mongodb&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 
-### 🔐 Authentication
-- **Admin & User Roles**: Separate authentication flows for administrators and students.
-- **JWT-based Security**: Secure access to protected routes using JSON Web Tokens.
-- **Password Hashing**: (Recommended) Secure storage of user credentials.
+## Features
 
-### 👨‍💼 Admin Functionalities
-- **Course Management**: Create, update, and delete courses.
-- **Content Control**: Manage course details, pricing, and availability.
-- **Admin Dashboard**: Overview of platform activity.
+- **Two roles, two secrets.** Admin and user tokens are signed with different keys, so a user token can never pass the admin middleware.
+- **Password hashing** with bcrypt and **request validation** with Zod.
+- **Course management** for admins: create, update, list.
+- **Purchases** for users, plus a "my purchases" endpoint.
 
-### 👤 User Functionalities
-- **Course Browsing**: View all available courses.
-- **Secure Purchase**: Purchase courses and track ownership.
-- **My Courses**: Access a personalized list of purchased content.
-
-## 🛠️ Tech Stack
-
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Database**: MongoDB (via Mongoose)
-- **Security**: JSON Web Tokens (JWT)
-- **Environment**: Dotenv for configuration
-
-## 📂 Project Structure
+## Project structure
 
 ```text
-├── middleware/        # Authentication & validation middlewares
-├── routes/            # Express route definitions (Admin & User)
-├── models/            # Mongoose schemas (User, Admin, Course, Purchase)
-├── .env               # Environment variables (Database URL, JWT Secret)
-├── index.js           # Main entry point
-└── package.json       # Dependencies and scripts
+├── index.js          # App entry: mounts routers under /api/v1, connects to MongoDB
+├── config.js         # Reads secrets from the environment
+├── db.js             # Mongoose schemas: user, admin, course, purchase
+├── middleware/       # adminMiddleware, userMiddleware (Bearer token check)
+└── routes/           # admin.js, user.js, course.js
 ```
 
-## 🚦 Getting Started
+## Getting started
 
-### Prerequisites
-- Node.js installed
-- MongoDB instance (Local or Atlas)
+**Prerequisites:** Node.js 18+ and a MongoDB database (local or Atlas).
 
-### Installation
+```bash
+git clone https://github.com/yuvrajnode/course-selling-backend.git
+cd course-selling-backend
+npm install
+cp .env.example .env   # then fill in your own values
+node index.js
+```
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yuvrajnode/course-selling-backend.git
-   cd course-selling-backend
-   ```
+The server listens on `http://localhost:3000`.
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+### Environment variables
 
-3. **Configure Environment Variables**
-   Create a `.env` file in the root directory:
-   ```env
-   MONGO_URL=your_mongodb_connection_string
-   JWT_ADMIN_PASSWORD=your_admin_secret
-   JWT_USER_PASSWORD=your_user_secret
-   ```
+| Variable | Description |
+|---|---|
+| `MONGODB_URI` | MongoDB connection string |
+| `JWT_ADMIN_PASSWORD` | Secret used to sign admin tokens |
+| `JWT_USER_PASSWORD` | Secret used to sign user tokens |
 
-4. **Run the server**
-   ```bash
-   node index.js
-   ```
+## API
 
-## 🛣️ API Endpoints
+All routes are prefixed with `/api/v1`. Protected routes expect `Authorization: Bearer <token>`.
 
-### Admin Routes
-- `POST /admin/signup` - Register a new admin
-- `POST /admin/login` - Admin login
-- `POST /admin/course` - Create a new course
-- `PUT /admin/course` - Update an existing course
-- `GET /admin/course/bulk` - Get all courses created by admin
+### Admin
 
-### User Routes
-- `POST /user/signup` - Register a new user
-- `POST /user/login` - User login
-- `GET /user/course/bulk` - View all available courses
-- `POST /user/purchase` - Purchase a course
-- `GET /user/purchases` - View purchased courses
+| Method | Route | Auth | Description |
+|---|---|---|---|
+| POST | `/admin/signup` | – | Register an admin (`email`, `password`, `firstName`, `lastName`) |
+| POST | `/admin/signin` | – | Returns an admin JWT |
+| POST | `/admin/course` | admin | Create a course (`title`, `description`, `price`, `imageUrl`) |
+| PUT | `/admin/course/:id` | admin | Update a course |
+| GET | `/admin/course/bulk` | – | List all courses |
 
-## 🤝 Contributing
-Contributions are welcome! Please feel free to submit a Pull Request.
+### User
 
-## 📄 License
-This project is licensed under the MIT License.
+| Method | Route | Auth | Description |
+|---|---|---|---|
+| POST | `/user/signup` | – | Register a user |
+| POST | `/user/signin` | – | Returns a user JWT |
+| GET | `/user/purchases` | user | Courses the user has bought |
+
+### Courses
+
+| Method | Route | Auth | Description |
+|---|---|---|---|
+| GET | `/course/preview` | – | Public course catalogue |
+| POST | `/course/purchase` | user | Buy a course (`courseId`) |
+
+### Example
+
+```bash
+curl -X POST http://localhost:3000/api/v1/user/signin \
+  -H "Content-Type: application/json" \
+  -d '{"email":"student@example.com","password":"secret123"}'
+```
+
+## License
+
+[MIT](LICENSE) © Yuvraj Singh
